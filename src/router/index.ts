@@ -1,6 +1,7 @@
 import {route} from "quasar/wrappers";
 import VueRouter from "vue-router";
 import routes from "./routes";
+import {places, stats} from "components/models";
 
 /*
  * If not building with SSR mode, you can
@@ -9,7 +10,7 @@ import routes from "./routes";
 
 export default route(function ({Vue}) {
 	Vue.use(VueRouter);
-	return new VueRouter({
+	let router = new VueRouter({
 		scrollBehavior: () => ({x: 0, y: 0}),
 		routes,
 
@@ -19,4 +20,13 @@ export default route(function ({Vue}) {
 		mode: process.env.VUE_ROUTER_MODE,
 		base: process.env.VUE_ROUTER_BASE
 	});
+	router.beforeEach((to, from, next) => {
+		if (to.params.place && to.params.stat) {
+			if (to.params.place in places && stats.includes(to.params.stat))
+				next();
+			else
+				next("/");
+		} else next();
+	});
+	return router;
 });

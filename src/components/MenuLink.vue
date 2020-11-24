@@ -1,5 +1,5 @@
 <template>
-	<q-item v-ripple :to="link" active-class="menu-link-active" clickable>
+	<q-item v-ripple :to="{params:{place:link}}" active-class="menu-link-active" clickable>
 		<q-item-section>
 			<q-item-label class="text-bold">{{ title }}</q-item-label>
 		</q-item-section>

@@ -6,12 +6,17 @@ const routes: RouteConfig[] = [
 		component: () => import("layouts/MainLayout.vue"),
 		children: [
 			{
-				path: ":place",
-				component: () => import("pages/Place.vue")
+				name: "stat",
+				path: ":place/:stat",
+				component: () => import("pages/Stat.vue")
 			},
 			{
 				path: "",
-				redirect: "italia"
+				redirect: {name: "stat", params: {place: "italia", stat: "nuovi_positivi"}}
+			},
+			{
+				path: "*",
+				redirect: {name: "stat", params: {place: "italia", stat: "nuovi_positivi"}}
 			}
 		]
 	},

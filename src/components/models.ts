@@ -25,14 +25,16 @@ export interface RawDatum {
 	note?: string
 }
 
-interface Values {
+export interface Values {
 	nuovi_positivi: number
 	nuovi_guariti: number
 	nuovi_deceduti: number
 	nuovi_tamponi: number
 }
 
-interface Indexes {
+export const stats: string[] = ["nuovi_positivi", "nuovi_guariti", "nuovi_deceduti", "nuovi_tamponi"];
+
+export interface Indexes {
 	i_nuovi_positivi: number
 	i_nuovi_guariti: number
 	i_nuovi_deceduti: number
@@ -61,9 +63,11 @@ export class Data {
 	private static instance?: Data = undefined;
 	public static lookahead = 30;
 	public static readonly timeFormat = d3.timeFormat("%A, %d/%m/%Y");
+	public readonly updated: Date;
 
 	private constructor(data: Map<Place, Array<Datum>>) {
 		this.data = data;
+		this.updated = new Date()
 	}
 
 	public get(place: Place): Array<Datum> {
@@ -71,7 +75,7 @@ export class Data {
 	}
 
 	public futureStart(): Date {
-		return (this.data.get(places[0])!.find(it => it.projection) ?? {data: new Date()}).data;
+		return (this.data.get(places.italia)!.find(it => it.projection) ?? {data: new Date()}).data;
 	}
 
 	public static async getInstance(): Promise<Data> {
@@ -79,14 +83,16 @@ export class Data {
 			const data = new Map<Place, Array<Datum>>();
 			const itaResponse = await axios.get("https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-andamento-nazionale.json");
 			if (itaResponse.data !== undefined)
-				data.set(places[0], this.createStats(itaResponse.data));
+				data.set(places.italia, this.createStats(itaResponse.data));
 			else throw Error("Imposibile caricare dati nazionali");
 			const regionalResponse = await axios.get("https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-regioni.json");
 			const regionalData = regionalResponse.data;
 			if (regionalData !== undefined) {
-				places.slice(1).forEach(place => {
-					const value = regionalData.filter((it: RawDatum) => it.codice_regione == place.code);
-					data.set(place, this.createStats(value));
+				Object.values(places).forEach(place => {
+					if (place !== places.italia) {
+						const value = regionalData.filter((it: RawDatum) => it.codice_regione == place.code);
+						data.set(place, this.createStats(value));
+					}
 				});
 			} else throw Error("Impossibile scaricare i dati regionali");
 			this.instance = new Data(data);
@@ -107,7 +113,7 @@ export class Data {
 			const i_nuovi_guariti = this.calcGrowth(result, index, "nuovi_guariti");
 			const i_nuovi_deceduti = this.calcGrowth(result, index, "nuovi_deceduti");
 			const i_nuovi_tamponi = this.calcGrowth(result, index, "nuovi_tamponi");
-			let nuovi_deceduti = 0, nuovi_guariti = 0, nuovi_tamponi = 0, nuovi_positivi: number;
+			let nuovi_deceduti: number, nuovi_guariti: number, nuovi_tamponi: number, nuovi_positivi: number;
 			if (rawDatum) {
 				nuovi_positivi = Math.max(rawDatum.nuovi_positivi ?? 0, 0);
 				nuovi_deceduti = Math.max((rawDatum.deceduti ?? 0) - (lastDatum.deceduti ?? 0), 0);
@@ -115,6 +121,9 @@ export class Data {
 				nuovi_tamponi = Math.max((rawDatum.tamponi ?? 0) - (lastDatum.tamponi ?? 0), 0);
 			} else {
 				nuovi_positivi = this.calcFuture(result, index, "nuovi_positivi", i_nuovi_positivi);
+				nuovi_deceduti = this.calcFuture(result, index, "nuovi_deceduti", i_nuovi_deceduti);
+				nuovi_guariti = this.calcFuture(result, index, "nuovi_guariti", i_nuovi_guariti);
+				nuovi_tamponi = this.calcFuture(result, index, "nuovi_tamponi", i_nuovi_tamponi);
 			}
 			result.push({
 				data: it,
@@ -160,6 +169,10 @@ export class Data {
 		}
 		return d3.mean(avg) ?? 0;
 	}
+
+	static reset() {
+		this.instance = undefined
+	}
 }
 
 export interface Place {
@@ -168,115 +181,115 @@ export interface Place {
 	code: number
 }
 
-export const places: Array<Place> = [
-	{
+export const places = {
+	"italia": <Place>{
 		title: "Italia",
 		link: "italia",
 		code: 0
 	},
-	{
+	"abruzzo": <Place>{
 		title: "Abruzzo",
 		link: "abruzzo",
 		code: 13
 	},
-	{
+	"basilicata": <Place>{
 		title: "Basilicata",
 		link: "basilicata",
 		code: 17
 	},
-	{
+	"calabria": <Place>{
 		title: "Calabria",
 		link: "calabria",
 		code: 18
 	},
-	{
+	"campania": <Place>{
 		title: "Campania",
 		link: "campania",
 		code: 15
 	},
-	{
+	"emilia-romagna": <Place>{
 		title: "Emilia-Romagna",
 		link: "emilia-romagna",
 		code: 8
 	},
-	{
+	"friuli-venezia-giulia": <Place>{
 		title: "Friuli Venezia Giulia",
 		link: "friuli-venezia-giulia",
 		code: 6
 	},
-	{
+	"lazio": <Place>{
 		title: "Lazio",
 		link: "lazio",
 		code: 12
 	},
-	{
+	"liguria": <Place>{
 		title: "Liguria",
 		link: "liguria",
 		code: 7
 	},
-	{
+	"lombardia": <Place>{
 		title: "Lombardia",
 		link: "lombardia",
 		code: 3
 	},
-	{
+	"marche": <Place>{
 		title: "Marche",
 		link: "marche",
 		code: 11
 	},
-	{
+	"molise": <Place>{
 		title: "Molise",
 		link: "molise",
 		code: 14
 	},
-	{
+	"bolzano": <Place>{
 		title: "P.A. Bolzano",
 		link: "bolzano",
 		code: 21
 	},
-	{
+	"trento": <Place>{
 		title: "P.A. Trento",
 		link: "trento",
 		code: 22
 	},
-	{
+	"piemonte": <Place>{
 		title: "Piemonte",
 		link: "piemonte",
 		code: 1
 	},
-	{
+	"puglia": <Place>{
 		title: "Puglia",
 		link: "puglia",
 		code: 16
 	},
-	{
+	"sardegna": <Place>{
 		title: "Sardegna",
 		link: "sardegna",
 		code: 20
 	},
-	{
+	"sicilia": <Place>{
 		title: "Sicilia",
 		link: "sicilia",
 		code: 19
 	},
-	{
+	"toscana": <Place>{
 		title: "Toscana",
 		link: "toscana",
 		code: 9
 	},
-	{
+	"umbria": <Place>{
 		title: "Umbria",
 		link: "umbria",
 		code: 10
 	},
-	{
+	"valle-d-aosta": <Place>{
 		title: "Valle d'Aosta",
 		link: "valle-d-aosta",
 		code: 2
 	},
-	{
+	"veneto": <Place>{
 		title: "Veneto",
 		link: "veneto",
 		code: 5
 	}
-];
+};
