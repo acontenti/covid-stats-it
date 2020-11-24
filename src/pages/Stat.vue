@@ -30,6 +30,7 @@ export default class Stat extends Vue {
 	istat: keyof Indexes = "i_nuovi_positivi";
 	futureStart = new Date();
 	loading = true;
+	textColor = this.$q.dark.isActive ? "#fff" : "#000";
 	chart = {
 		width: 100,
 		height: 200,
@@ -54,12 +55,21 @@ export default class Stat extends Vue {
 			yAxisName: ["", ""]
 		},
 		extend: {
+			textStyle: {
+				color: this.textColor
+			},
 			title: {
 				text: "",
-				left: "center"
+				left: "center",
+				textStyle: {
+					color: this.textColor
+				}
 			},
 			legend: {
-				padding: [35, 5, 5, 5]
+				padding: [35, 5, 5, 5],
+				textStyle: {
+					color: this.textColor
+				}
 			},
 			"tooltip.axisPointer.type": "shadow",
 			"series.0.markLine": undefined,
@@ -79,6 +89,9 @@ export default class Stat extends Vue {
 				show: true,
 				labelFormatter: (value: number, valueStr: string) => {
 					return valueStr.substring(valueStr.indexOf(", ") + 2);
+				},
+				textStyle: {
+					color: this.textColor
 				}
 			},
 			{
@@ -91,25 +104,25 @@ export default class Stat extends Vue {
 			label: {
 				show: false
 			},
+			lineStyle: {
+				color: "#000"
+			},
 			data: [{
-				yAxis: 1,
-				lineStyle: {
-					color: "#000"
-				}
+				yAxis: 1
 			}]
 		},
 		markArea: {
 			silent: true,
 			label: {
-				color: "#000"
+				color: this.textColor
+			},
+			itemStyle: {
+				color: "#22222222"
 			},
 			data: [
 				[{
 					xAxis: "max",
-					name: "Proiezione",
-					itemStyle: {
-						color: "#22222222"
-					}
+					name: "Proiezione"
 				}, {
 					xAxis: "max"
 				}]
@@ -139,7 +152,7 @@ export default class Stat extends Vue {
 					this.futureStart = instance.futureStart();
 					this.chart.markArea.data[0][0].xAxis = Data.timeFormat(this.futureStart);
 					this.chart.extend.title.text = this.place.title;
-					this.$root.$emit("updated", instance.updated)
+					this.$root.$emit("updated", instance.updated);
 				}
 			})
 			.catch(reason => alert(reason))
@@ -161,6 +174,17 @@ export default class Stat extends Vue {
 	@Watch("$route")
 	route() {
 		this.init();
+	}
+
+	@Watch("$q.dark.isActive")
+	onDarkModeCHange(value: boolean) {
+		this.textColor = value ? "#fff" : "#000";
+		this.chart.extend.textStyle.color = this.textColor;
+		this.chart.extend.legend.textStyle.color = this.textColor;
+		this.chart.extend.title.textStyle.color = this.textColor;
+		this.chart.dataZoom[0].textStyle!.color = this.textColor;
+		this.chart.markArea.itemStyle.color = value ? "#cccccc22" : "#22222222";
+		this.chart.markArea.label.color = this.textColor;
 	}
 
 	mounted() {
