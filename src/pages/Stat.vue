@@ -48,11 +48,18 @@ export default class Stat extends Vue {
 				"nuovi_deceduti": "Nuovi deceduti",
 				"i_nuovi_deceduti": "Crescita nuovi deceduti",
 				"nuovi_tamponi": "Nuovi tamponi",
-				"i_nuovi_tamponi": "Crescita nuovi tamponi"
+				"i_nuovi_tamponi": "Crescita nuovi tamponi",
+				"casi_tamponi": "Rapporto casi/tamponi",
+				"i_casi_tamponi": "Crescita rapporto casi/tamponi"
 			},
-			axisSite: {right: ["i_nuovi_positivi", "i_nuovi_guariti", "i_nuovi_deceduti", "i_nuovi_tamponi"]},
+			axisSite: {
+				right: ["i_nuovi_positivi", "i_nuovi_guariti", "i_nuovi_deceduti", "i_nuovi_tamponi", "i_casi_tamponi"]
+			},
 			yAxisType: ["normal", "normal"],
-			yAxisName: ["", ""]
+			yAxisName: ["", ""],
+			nullAddZero: true,
+			smooth: true,
+			type: "line"
 		},
 		extend: {
 			textStyle: {
@@ -72,15 +79,19 @@ export default class Stat extends Vue {
 				}
 			},
 			"tooltip.axisPointer.type": "shadow",
+			"series.0.type": "line",
 			"series.0.markLine": undefined,
 			"series.0.symbol": "circle",
 			"series.0.symbolSize": 5,
+			"series.1.type": "line",
 			"series.1.symbol": "none",
 			"series.1.lineStyle.width": 1,
 			"xAxis.0.max": "dataMax",
 			"xAxis.0.axisLabel.formatter": (value: string) => {
 				return value.substring(value.indexOf(", ") + 2, value.lastIndexOf("/"));
-			}
+			},
+			"yAxis.0.splitLine.lineStyle.color": "rgba(128, 128, 128, 0.2)",
+			"yAxis.1.splitLine.lineStyle.color": "rgba(128, 128, 128, 0.2)"
 		},
 		colors: ["#4472C4", "#BF9000"],
 		dataZoom: [
@@ -105,7 +116,8 @@ export default class Stat extends Vue {
 				show: false
 			},
 			lineStyle: {
-				color: "#000"
+				color: this.textColor,
+				width: 1.3
 			},
 			data: [{
 				yAxis: 1
@@ -185,6 +197,7 @@ export default class Stat extends Vue {
 		this.chart.dataZoom[0].textStyle!.color = this.textColor;
 		this.chart.markArea.itemStyle.color = value ? "#cccccc22" : "#22222222";
 		this.chart.markArea.label.color = this.textColor;
+		this.chart.markLine.lineStyle.color = this.textColor;
 	}
 
 	mounted() {

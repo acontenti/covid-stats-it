@@ -61,6 +61,7 @@
 				<q-route-tab :to="{params:{stat:'nuovi_guariti'}}" exact label="Nuovi guariti"/>
 				<q-route-tab :to="{params:{stat:'nuovi_deceduti'}}" exact label="Nuovi deceduti"/>
 				<q-route-tab :to="{params:{stat:'nuovi_tamponi'}}" exact label="Nuovi tamponi"/>
+				<q-route-tab :to="{params:{stat:'casi_tamponi'}}" exact label="Casi/tamponi"/>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>

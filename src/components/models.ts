@@ -30,15 +30,17 @@ export interface Values {
 	nuovi_guariti: number
 	nuovi_deceduti: number
 	nuovi_tamponi: number
+	casi_tamponi: number
 }
 
-export const stats: string[] = ["nuovi_positivi", "nuovi_guariti", "nuovi_deceduti", "nuovi_tamponi"];
+export const stats: string[] = ["nuovi_positivi", "nuovi_guariti", "nuovi_deceduti", "nuovi_tamponi", "casi_tamponi"];
 
 export interface Indexes {
 	i_nuovi_positivi: number
 	i_nuovi_guariti: number
 	i_nuovi_deceduti: number
 	i_nuovi_tamponi: number
+	i_casi_tamponi: number
 }
 
 export interface Datum extends Values, Indexes {
@@ -67,7 +69,7 @@ export class Data {
 
 	private constructor(data: Map<Place, Array<Datum>>) {
 		this.data = data;
-		this.updated = new Date()
+		this.updated = new Date();
 	}
 
 	public get(place: Place): Array<Datum> {
@@ -113,28 +115,34 @@ export class Data {
 			const i_nuovi_guariti = this.calcGrowth(result, index, "nuovi_guariti");
 			const i_nuovi_deceduti = this.calcGrowth(result, index, "nuovi_deceduti");
 			const i_nuovi_tamponi = this.calcGrowth(result, index, "nuovi_tamponi");
-			let nuovi_deceduti: number, nuovi_guariti: number, nuovi_tamponi: number, nuovi_positivi: number;
+			const i_casi_tamponi = this.calcGrowth(result, index, "casi_tamponi");
+			let nuovi_deceduti: number, nuovi_guariti: number, nuovi_tamponi: number, nuovi_positivi: number,
+				casi_tamponi: number;
 			if (rawDatum) {
-				nuovi_positivi = Math.max(rawDatum.nuovi_positivi ?? 0, 0);
-				nuovi_deceduti = Math.max((rawDatum.deceduti ?? 0) - (lastDatum.deceduti ?? 0), 0);
-				nuovi_guariti = Math.max((rawDatum.dimessi_guariti ?? 0) - (lastDatum.dimessi_guariti ?? 0), 0);
-				nuovi_tamponi = Math.max((rawDatum.tamponi ?? 0) - (lastDatum.tamponi ?? 0), 0);
+				nuovi_positivi = Math.round(Math.max(rawDatum.nuovi_positivi ?? 0, 0));
+				nuovi_deceduti = Math.round(Math.max((rawDatum.deceduti ?? 0) - (lastDatum.deceduti ?? 0), 0));
+				nuovi_guariti = Math.round(Math.max((rawDatum.dimessi_guariti ?? 0) - (lastDatum.dimessi_guariti ?? 0), 0));
+				nuovi_tamponi = Math.round(Math.max((rawDatum.tamponi ?? 0) - (lastDatum.tamponi ?? 0), 0));
+				casi_tamponi = Math.min(nuovi_positivi / nuovi_tamponi * 100, 100);
 			} else {
-				nuovi_positivi = this.calcFuture(result, index, "nuovi_positivi", i_nuovi_positivi);
-				nuovi_deceduti = this.calcFuture(result, index, "nuovi_deceduti", i_nuovi_deceduti);
-				nuovi_guariti = this.calcFuture(result, index, "nuovi_guariti", i_nuovi_guariti);
-				nuovi_tamponi = this.calcFuture(result, index, "nuovi_tamponi", i_nuovi_tamponi);
+				nuovi_positivi = Math.round(this.calcFuture(result, index, "nuovi_positivi", i_nuovi_positivi));
+				nuovi_deceduti = Math.round(this.calcFuture(result, index, "nuovi_deceduti", i_nuovi_deceduti));
+				nuovi_guariti = Math.round(this.calcFuture(result, index, "nuovi_guariti", i_nuovi_guariti));
+				nuovi_tamponi = Math.round(this.calcFuture(result, index, "nuovi_tamponi", i_nuovi_tamponi));
+				casi_tamponi = Math.min(this.calcFuture(result, index, "casi_tamponi", i_casi_tamponi), 100);
 			}
 			result.push({
 				data: it,
-				nuovi_positivi,
-				nuovi_deceduti,
-				nuovi_guariti,
-				nuovi_tamponi,
-				i_nuovi_positivi,
-				i_nuovi_guariti,
-				i_nuovi_deceduti,
-				i_nuovi_tamponi,
+				nuovi_positivi: isFinite(nuovi_positivi) ? nuovi_positivi : 0,
+				nuovi_deceduti: isFinite(nuovi_deceduti) ? nuovi_deceduti : 0,
+				nuovi_guariti: isFinite(nuovi_guariti) ? nuovi_guariti : 0,
+				nuovi_tamponi: isFinite(nuovi_tamponi) ? nuovi_tamponi : 0,
+				casi_tamponi: isFinite(casi_tamponi) ? casi_tamponi : 0,
+				i_nuovi_positivi: isFinite(i_nuovi_positivi) ? i_nuovi_positivi : 0,
+				i_nuovi_guariti: isFinite(i_nuovi_guariti) ? i_nuovi_guariti : 0,
+				i_nuovi_deceduti: isFinite(i_nuovi_deceduti) ? i_nuovi_deceduti : 0,
+				i_nuovi_tamponi: isFinite(i_nuovi_tamponi) ? i_nuovi_tamponi : 0,
+				i_casi_tamponi: isFinite(i_casi_tamponi) ? i_casi_tamponi : 0,
 				projection: !rawDatum
 			});
 		});
@@ -171,7 +179,7 @@ export class Data {
 	}
 
 	static reset() {
-		this.instance = undefined
+		this.instance = undefined;
 	}
 }
 
