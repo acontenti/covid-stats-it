@@ -1,3 +1,7 @@
+[build]
+publish = "dist/pwa"
+command = "yarn build:pwa"
+
 [[redirects]]
 from = "/*"
 to = "/index.html"
