@@ -7,16 +7,16 @@ const routes: RouteConfig[] = [
 		children: [
 			{
 				name: "stat",
-				path: ":place/:stat",
+				path: ":place/:stat/:var",
 				component: () => import("pages/Stat.vue")
 			},
 			{
 				path: "",
-				redirect: {name: "stat", params: {place: "italia", stat: "nuovi_positivi"}}
+				redirect: {name: "stat", params: {place: "italia", stat: "casi", var: "nuovi"}}
 			},
 			{
 				path: "*",
-				redirect: {name: "stat", params: {place: "italia", stat: "nuovi_positivi"}}
+				redirect: {name: "stat", params: {place: "italia", stat: "casi", var: "nuovi"}}
 			}
 		]
 	},

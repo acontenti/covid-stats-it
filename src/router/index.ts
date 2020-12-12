@@ -1,7 +1,7 @@
 import {route} from "quasar/wrappers";
 import VueRouter from "vue-router";
 import routes from "./routes";
-import {places, stats} from "components/models";
+import {places, stats, vars} from "components/models";
 
 /*
  * If not building with SSR mode, you can
@@ -22,7 +22,7 @@ export default route(function ({Vue}) {
 	});
 	router.beforeEach((to, from, next) => {
 		if (to.params.place && to.params.stat) {
-			if (to.params.place in places && stats.includes(to.params.stat))
+			if (to.params.place in places && stats.includes(to.params.stat) && vars.includes(to.params.var))
 				next();
 			else
 				next("/");

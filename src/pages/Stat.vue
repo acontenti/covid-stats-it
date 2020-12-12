@@ -1,5 +1,5 @@
 <template>
-	<q-page :key="this.place.link+this.stat" class="no-wrap q-px-sm q-py-md items-end">
+	<q-page :key="this.place.link+this.stat" class="no-wrap q-px-sm q-pt-md q-pb-sm items-end">
 		<div class="chart-container fit">
 			<ve-line :colors="chart.colors" :data="chart.data" :data-zoom="chart.dataZoom" :extend="chart.extend"
 					 :height="chart.height+'px'" :loading="loading" :mark-area="chart.markArea"
@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Data, Indexes, Place, places, Values} from "components/models";
+import {Data, Indexes, Place, PlaceName, places, Values} from "components/models";
 import "echarts/lib/component/dataZoom";
 import "echarts/lib/component/markLine";
 import "echarts/lib/component/markArea";
@@ -26,8 +26,8 @@ interface ChartData {
 @Component({})
 export default class Stat extends Vue {
 	place: Place = places.italia;
-	stat: keyof Values = "nuovi_positivi";
-	istat: keyof Indexes = "i_nuovi_positivi";
+	stat: keyof Values = "nuovi_casi";
+	istat: keyof Indexes = "i_nuovi_casi";
 	futureStart = new Date();
 	loading = true;
 	textColor = this.$q.dark.isActive ? "#fff" : "#000";
@@ -41,19 +41,36 @@ export default class Stat extends Vue {
 		settings: {
 			labelMap: {
 				"data": "Data",
-				"nuovi_positivi": "Nuovi casi",
-				"i_nuovi_positivi": "Crescita nuovi casi",
+				"nuovi_casi": "Nuovi casi",
+				"i_nuovi_casi": "Crescita nuovi casi",
+				"nuovi_positivi": "Nuovi positivi",
+				"i_nuovi_positivi": "Crescita nuovi positivi",
 				"nuovi_guariti": "Nuovi guariti",
 				"i_nuovi_guariti": "Crescita nuovi guariti",
 				"nuovi_deceduti": "Nuovi deceduti",
 				"i_nuovi_deceduti": "Crescita nuovi deceduti",
 				"nuovi_tamponi": "Nuovi tamponi",
 				"i_nuovi_tamponi": "Crescita nuovi tamponi",
-				"casi_tamponi": "Rapporto casi/tamponi",
-				"i_casi_tamponi": "Crescita rapporto casi/tamponi"
+				"nuovi_casi_tamponi": "Rapporto casi/tamponi",
+				"i_nuovi_casi_tamponi": "Crescita rapporto casi/tamponi",
+				"totale_casi": "Totale casi",
+				"i_totale_casi": "Crescita totale casi",
+				"totale_positivi": "Totale positivi",
+				"i_totale_positivi": "Crescita totale positivi",
+				"totale_guariti": "Totale guariti",
+				"i_totale_guariti": "Crescita totale guariti",
+				"totale_deceduti": "Totale deceduti",
+				"i_totale_deceduti": "Crescita totale deceduti",
+				"totale_tamponi": "Totale tamponi",
+				"i_totale_tamponi": "Crescita totale tamponi",
+				"totale_totale_casi_tamponi": "Rapporto totale casi/tamponi",
+				"i_totale_casi_tamponi": "Crescita rapporto totale casi/tamponi"
 			},
 			axisSite: {
-				right: ["i_nuovi_positivi", "i_nuovi_guariti", "i_nuovi_deceduti", "i_nuovi_tamponi", "i_casi_tamponi"]
+				right: [
+					"i_nuovi_casi", "i_nuovi_positivi", "i_nuovi_guariti", "i_nuovi_deceduti", "i_nuovi_tamponi", "i_nuovi_casi_tamponi",
+					"i_totale_casi", "i_totale_positivi", "i_totale_guariti", "i_totale_deceduti", "i_totale_tamponi", "i_totale_casi_tamponi"
+				]
 			},
 			yAxisType: ["normal", "normal"],
 			yAxisName: ["", ""],
@@ -67,13 +84,14 @@ export default class Stat extends Vue {
 			},
 			title: {
 				text: "",
+				padding: 0,
 				left: "center",
 				textStyle: {
 					color: this.textColor
 				}
 			},
 			legend: {
-				padding: [35, 5, 5, 5],
+				padding: [25, 5, 5, 5],
 				textStyle: {
 					color: this.textColor
 				}
@@ -88,7 +106,7 @@ export default class Stat extends Vue {
 			"series.1.lineStyle.width": 1,
 			"xAxis.0.max": "dataMax",
 			"xAxis.0.axisLabel.formatter": (value: string) => {
-				return value.substring(value.indexOf(", ") + 2, value.lastIndexOf("/"));
+				return value ? value.substring(value.indexOf(", ") + 2, value.lastIndexOf("/")) : "";
 			},
 			"yAxis.0.splitLine.lineStyle.color": "rgba(128, 128, 128, 0.2)",
 			"yAxis.1.splitLine.lineStyle.color": "rgba(128, 128, 128, 0.2)"
@@ -99,7 +117,7 @@ export default class Stat extends Vue {
 				type: "slider",
 				show: true,
 				labelFormatter: (value: number, valueStr: string) => {
-					return valueStr.substring(valueStr.indexOf(", ") + 2);
+					return valueStr ? valueStr.substring(valueStr.indexOf(", ") + 2) : "";
 				},
 				textStyle: {
 					color: this.textColor
@@ -144,11 +162,11 @@ export default class Stat extends Vue {
 
 	init() {
 		this.loading = true;
-		this.place = places[<keyof typeof places>this.$route.params.place];
-		this.stat = <keyof Values>(this.$route.params.stat);
+		this.place = places[<PlaceName>this.$route.params.place];
+		this.stat = <keyof Values>(this.$route.params.var + "_" + this.$route.params.stat);
 		this.istat = <keyof Indexes>("i_" + this.stat);
 		Data.getInstance()
-			.then((instance: Data) => ({instance, value: instance.get(this.place)}))
+			.then((instance: Data) => ({instance, value: instance.get(this.place.link)}))
 			.then(({instance, value}) => ({
 				instance,
 				value: value.map(it => ({
@@ -164,7 +182,7 @@ export default class Stat extends Vue {
 					this.futureStart = instance.futureStart();
 					this.chart.markArea.data[0][0].xAxis = Data.timeFormat(this.futureStart);
 					this.chart.extend.title.text = this.place.title;
-					this.$root.$emit("updated", instance.updated);
+					this.$root.$emit("updated", instance.updated, this.futureStart);
 				}
 			})
 			.catch(reason => alert(reason))
