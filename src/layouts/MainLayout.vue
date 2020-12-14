@@ -99,8 +99,8 @@
 <script lang="ts">
 import MenuLink from "components/MenuLink.vue";
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Place, PlaceName, places} from "components/place";
-import {Data} from "components/data";
+import {Place, PlaceName, places} from "src/model/place";
+import {Data} from "src/model/data";
 
 @Component({
 	components: {MenuLink},

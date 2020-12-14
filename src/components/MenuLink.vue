@@ -8,7 +8,7 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from "vue-property-decorator";
-import {PlaceName, places} from "components/place";
+import {PlaceName, places} from "src/model/place";
 
 @Component
 export default class MenuLink extends Vue {

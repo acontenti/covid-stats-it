@@ -11,14 +11,14 @@
 
 <script lang="ts">
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Indexes, Values} from "components/models";
+import {Indexes, Values} from "src/model/models";
 import "echarts/lib/component/dataZoom";
 import "echarts/lib/component/markLine";
 import "echarts/lib/component/markArea";
 import "v-charts/lib/style.css";
 import {date, DateLocale} from "quasar";
-import {Place, PlaceName, places} from "components/place";
-import {Data} from "components/data";
+import {Place, PlaceName, places} from "src/model/place";
+import {Data} from "src/model/data";
 
 interface ChartData {
   columns: string[]

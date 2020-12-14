@@ -1,4 +1,4 @@
-import {RawDatum} from "components/models";
+import {RawDatum} from "src/model/models";
 
 interface PlaceTypeInfo {
 	url: string

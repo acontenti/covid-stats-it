@@ -1,8 +1,8 @@
 import * as d3 from "d3";
-import {Place, PlaceName, places, placeTypes} from "components/place";
+import {Place, PlaceName, places, placeTypes} from "src/model/place";
 import axios from "axios";
 import _ from "lodash";
-import {Datum, RawDatum, Values} from "components/models";
+import {Datum, RawDatum, Values} from "src/model/models";
 import {date} from "quasar";
 
 export class Data {
