@@ -6,9 +6,10 @@
 				<q-toolbar-title>
 					Statistiche COVID-19
 				</q-toolbar-title>
-				<q-btn-toggle :options="[{label: 'Totale', value: 'totale'},{label: 'Nuovi', value: 'nuovi'}]"
-							  :value="var_" toggle-color="white" toggle-text-color="black" unelevated
-							  @input="setVar"/>
+				<q-btn-toggle :disable="!isToggleable()"
+							  :options="[{label: 'Totale', value: 'totale'},{label: 'Nuovi', value: 'nuovi'}]"
+							  :value="var_" toggle-color="white" toggle-text-color="black"
+							  unelevated @input="setVar"/>
 				<q-btn flat icon="refresh" round @click="refresh">
 					<q-tooltip>Aggiorna</q-tooltip>
 				</q-btn>
@@ -60,22 +61,26 @@
 				</q-btn>
 			</q-toolbar>
 			<q-tabs align="center" dense mobile-arrows outside-arrows>
-				<q-route-tab :to="{params:{stat:'casi'}}" exact label="casi"/>
-				<q-route-tab :to="{params:{stat:'positivi'}}" exact label="positivi"/>
-				<q-route-tab :to="{params:{stat:'guariti'}}" exact label="guariti"/>
-				<q-route-tab :to="{params:{stat:'deceduti'}}" exact label="deceduti"/>
-				<q-route-tab :to="{params:{stat:'tamponi'}}" exact label="tamponi"/>
-				<q-route-tab :to="{params:{stat:'casi_tamponi'}}" exact label="casi/tamponi"/>
+				<q-route-tab v-if="isAvailable('casi')" :to="{params:{stat:'casi'}}" exact label="casi"/>
+				<q-route-tab v-if="isAvailable('positivi')" :to="{params:{stat:'positivi'}}" exact label="positivi"/>
+				<q-route-tab v-if="isAvailable('guariti')" :to="{params:{stat:'guariti'}}" exact label="guariti"/>
+				<q-route-tab v-if="isAvailable('deceduti')" :to="{params:{stat:'deceduti'}}" exact label="deceduti"/>
+				<q-route-tab v-if="isAvailable('tamponi')" :to="{params:{stat:'tamponi'}}" exact label="tamponi"/>
+				<q-route-tab v-if="isAvailable('casi_tamponi')" :to="{params:{stat:'casi_tamponi'}}" exact
+							 label="casi/tamponi"/>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>
 			<q-scroll-area class="fit">
 				<q-list dense>
 					<q-item-label header>Nazionale</q-item-label>
-					<menu-link v-bind="italia"/>
+					<menu-link v-for="link in menuLinks" v-if="link.isState()" :key="link.title" v-bind="link"/>
 					<q-separator/>
 					<q-item-label header>Regioni</q-item-label>
-					<menu-link v-for="link in menuLinks" :key="link.title" v-bind="link"/>
+					<menu-link v-for="link in menuLinks" v-if="link.isRegion()" :key="link.title" v-bind="link"/>
+					<q-separator/>
+					<q-item-label header>Province</q-item-label>
+					<menu-link v-for="link in menuLinks" v-if="link.isProvince()" :key="link.title" v-bind="link"/>
 				</q-list>
 			</q-scroll-area>
 		</q-drawer>
@@ -94,7 +99,8 @@
 <script lang="ts">
 import MenuLink from "components/MenuLink.vue";
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Data, Place, places} from "components/models";
+import {Place, PlaceName, places} from "components/place";
+import {Data} from "components/data";
 
 @Component({
 	components: {MenuLink},
@@ -113,8 +119,7 @@ import {Data, Place, places} from "components/models";
 })
 export default class MainLayout extends Vue {
 	leftDrawerOpen = false;
-	menuLinks: Place[] = Object.values(places).filter(it => it !== places.italia);
-	italia: Place = places.italia;
+	menuLinks: Place[] = Object.values(places);
 	lookahead = 30;
 	lastUpdate: Date | null = null;
 	lastData: Date | null = null;
@@ -140,6 +145,32 @@ export default class MainLayout extends Vue {
 		this.lookahead = value;
 		await this.$nextTick();
 		this.$root.$emit("lookaheadChange", value);
+	}
+
+	isAvailable(stat: string) {
+		let placeName = this.$route.params.place;
+		if (!placeName) return false;
+		let currentPlace = places[<PlaceName>placeName];
+		switch (currentPlace.type) {
+			case "state":
+			case "region":
+				return true;
+			case "province":
+				return stat == "casi";
+		}
+	}
+
+	isToggleable() {
+		let placeName = this.$route.params.place;
+		if (!placeName) return false;
+		let currentPlace = places[<PlaceName>placeName];
+		switch (currentPlace.type) {
+			case "state":
+			case "region":
+				return true;
+			case "province":
+				return false;
+		}
 	}
 
 	refresh() {
