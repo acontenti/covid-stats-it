@@ -14,10 +14,9 @@
 				<q-toolbar-title>
 					Statistiche COVID-19
 				</q-toolbar-title>
-				<q-btn-toggle :disable="!isToggleable()"
-							  :options="[{label: 'Totale', value: 'totale'},{label: 'Nuovi', value: 'nuovi'}]"
-							  :value="var_" toggle-color="white" toggle-text-color="black"
-							  unelevated @input="setVar"/>
+				<q-btn-toggle :disable="!isVarToggleable()"
+							  :options="Object.entries(vars).map(([k,v])=>({label:v.normal,value:k}))"
+							  :value="var_" toggle-color="white" toggle-text-color="black" unelevated @input="setVar"/>
 				<q-btn flat icon="refresh" round @click="refresh">
 					<q-tooltip>Aggiorna</q-tooltip>
 				</q-btn>
@@ -33,8 +32,8 @@
 									<q-item-label>Previsione</q-item-label>
 								</q-item-section>
 								<q-item-section>
-									<q-slider v-model="lookahead" :label-value="lookahead + ' giorni'" :max="60"
-											  :min="1" :step="1" label snap/>
+									<q-slider v-model="lookahead" :label-value="lookahead + ' giorni'"
+											  :max="maxLookahead" :min="1" :step="1" label snap/>
 								</q-item-section>
 							</q-item>
 							<q-item v-ripple tag="label">
@@ -80,16 +79,8 @@
 				</q-btn>
 			</q-toolbar>
 			<q-tabs align="center" dense mobile-arrows outside-arrows>
-				<q-route-tab v-if="isAvailable('casi')" :to="{params:{stat:'casi'}}" exact label="casi"/>
-				<q-route-tab v-if="isAvailable('positivi')" :to="{params:{stat:'positivi'}}" exact label="positivi"/>
-				<q-route-tab v-if="isAvailable('guariti')" :to="{params:{stat:'guariti'}}" exact label="guariti"/>
-				<q-route-tab v-if="isAvailable('deceduti')" :to="{params:{stat:'deceduti'}}" exact label="deceduti"/>
-				<q-route-tab v-if="isAvailable('tamponi')" :to="{params:{stat:'tamponi'}}" exact label="tamponi"/>
-				<q-route-tab v-if="isAvailable('testati')" :to="{params:{stat:'testati'}}" exact label="testati"/>
-				<q-route-tab v-if="isAvailable('casi_tamponi')" :to="{params:{stat:'casi_tamponi'}}" exact
-							 label="casi/tamponi"/>
-				<q-route-tab v-if="isAvailable('casi_testati')" :to="{params:{stat:'casi_testati'}}" exact
-							 label="casi/testati"/>
+				<q-route-tab v-for="(label, stat) in stats" v-if="isStatAvailable(stat)" :key="stat"
+							 :label="label.short" :to="{params:{stat:stat}}" exact/>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>
@@ -123,6 +114,7 @@ import MenuLink from "components/MenuLink.vue";
 import {Component, Vue, Watch} from "vue-property-decorator";
 import {Place, PlaceName, places} from "src/model/place";
 import {Data} from "src/model/data";
+import {stats, vars} from "src/model/models";
 
 @Component({
 	components: {MenuLink},
@@ -140,8 +132,11 @@ import {Data} from "src/model/data";
 	}
 })
 export default class MainLayout extends Vue {
+	readonly menuLinks: Place[] = Object.values(places);
+	readonly vars = vars;
+	readonly stats = stats;
+	readonly maxLookahead = Data.lookahead;
 	leftDrawerOpen = false;
-	menuLinks: Place[] = Object.values(places);
 	lookahead = 30;
 	lastUpdate: Date | null = null;
 	lastData: Date | null = null;
@@ -175,7 +170,7 @@ export default class MainLayout extends Vue {
 		this.$root.$emit("lookaheadChange", value);
 	}
 
-	isAvailable(stat: string) {
+	isStatAvailable(stat: string) {
 		let placeName = this.$route.params.place;
 		if (!placeName) return false;
 		let currentPlace = places[<PlaceName>placeName];
@@ -188,7 +183,7 @@ export default class MainLayout extends Vue {
 		}
 	}
 
-	isToggleable() {
+	isVarToggleable() {
 		let placeName = this.$route.params.place;
 		if (!placeName) return false;
 		let currentPlace = places[<PlaceName>placeName];
@@ -214,24 +209,26 @@ export default class MainLayout extends Vue {
 
 	minimize() {
 		if (process.env.MODE === "electron") {
-			this.$q.electron.remote.BrowserWindow.getFocusedWindow().minimize();
+			this.$q.electron.remote.BrowserWindow.getFocusedWindow()?.minimize();
 		}
 	}
 
 	maximize() {
 		if (process.env.MODE === "electron") {
 			const win = this.$q.electron.remote.BrowserWindow.getFocusedWindow();
-			if (win.isMaximized()) {
-				win.unmaximize();
-			} else {
-				win.maximize();
+			if (win) {
+				if (win.isMaximized()) {
+					win.unmaximize();
+				} else {
+					win.maximize();
+				}
 			}
 		}
 	}
 
 	close() {
 		if (process.env.MODE === "electron") {
-			this.$q.electron.remote.BrowserWindow.getFocusedWindow().close();
+			this.$q.electron.remote.BrowserWindow.getFocusedWindow()?.close();
 		}
 	}
 

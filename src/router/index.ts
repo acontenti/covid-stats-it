@@ -22,8 +22,8 @@ export default route(function ({Vue}) {
 		base: process.env.VUE_ROUTER_BASE
 	});
 	router.beforeEach((to, from, next) => {
-		if (to.params.place && to.params.stat) {
-			if (to.params.place in places && stats.includes(to.params.stat) && vars.includes(to.params.var))
+		if (to.params.place && to.params.stat && to.params.var) {
+			if (to.params.place in places && to.params.stat in stats && to.params.var in vars)
 				next();
 			else
 				next("/");

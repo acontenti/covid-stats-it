@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Indexes, Values} from "src/model/models";
+import {Indexes, stats, Values, vars} from "src/model/models";
 import "echarts/lib/component/dataZoom";
 import "echarts/lib/component/markLine";
 import "echarts/lib/component/markArea";
@@ -19,6 +19,7 @@ import "v-charts/lib/style.css";
 import {date, DateLocale} from "quasar";
 import {Place, PlaceName, places} from "src/model/place";
 import {Data} from "src/model/data";
+import _ from "lodash";
 
 interface ChartData {
 	columns: string[]
@@ -33,7 +34,7 @@ const LOCALE_IT: DateLocale = {
 };
 
 @Component({})
-export default class Stat extends Vue {
+export default class Chart extends Vue {
 	place: Place = places.italia;
 	stat: keyof Values = "nuovi_casi";
 	istat: keyof Indexes = "i_nuovi_casi";
@@ -48,46 +49,9 @@ export default class Stat extends Vue {
 			rows: []
 		},
 		settings: {
-			labelMap: {
-				"data": "Data",
-				"nuovi_casi": "Nuovi casi",
-				"i_nuovi_casi": "Crescita nuovi casi",
-				"nuovi_positivi": "Nuovi positivi",
-				"i_nuovi_positivi": "Crescita nuovi positivi",
-				"nuovi_guariti": "Nuovi guariti",
-				"i_nuovi_guariti": "Crescita nuovi guariti",
-				"nuovi_deceduti": "Nuovi deceduti",
-				"i_nuovi_deceduti": "Crescita nuovi deceduti",
-				"nuovi_tamponi": "Nuovi tamponi",
-				"i_nuovi_tamponi": "Crescita nuovi tamponi",
-				"nuovi_testati": "Nuove persone testate",
-				"i_nuovi_testati": "Crescita nuove persone testate",
-				"nuovi_casi_tamponi": "Rapporto casi/tamponi",
-				"i_nuovi_casi_tamponi": "Crescita rapporto casi/tamponi",
-				"nuovi_casi_testati": "Rapporto casi/persone testate",
-				"i_nuovi_casi_testati": "Crescita rapporto casi/persone testate",
-				"totale_casi": "Totale casi",
-				"i_totale_casi": "Crescita totale casi",
-				"totale_positivi": "Totale positivi",
-				"i_totale_positivi": "Crescita totale positivi",
-				"totale_guariti": "Totale guariti",
-				"i_totale_guariti": "Crescita totale guariti",
-				"totale_deceduti": "Totale deceduti",
-				"i_totale_deceduti": "Crescita totale deceduti",
-				"totale_tamponi": "Totale tamponi",
-				"i_totale_tamponi": "Crescita totale tamponi",
-				"totale_testati": "Totale persone testate",
-				"i_totale_testati": "Crescita totale persone testate",
-				"totale_totale_casi_tamponi": "Rapporto totale casi/tamponi",
-				"i_totale_casi_tamponi": "Crescita rapporto totale casi/tamponi",
-				"totale_totale_casi_testati": "Rapporto totale casi/persone testate",
-				"i_totale_casi_testati": "Crescita rapporto totale casi/persone testate"
-			},
+			labelMap: this.labels,
 			axisSite: {
-				right: [
-					"i_nuovi_casi", "i_nuovi_positivi", "i_nuovi_guariti", "i_nuovi_deceduti", "i_nuovi_tamponi", "i_nuovi_testati", "i_nuovi_casi_tamponi", "i_nuovi_casi_testati",
-					"i_totale_casi", "i_totale_positivi", "i_totale_guariti", "i_totale_deceduti", "i_totale_tamponi", "i_totale_testati", "i_totale_casi_tamponi", "i_totale_casi_testati"
-				]
+				right: this.indexes
 			},
 			yAxisType: ["normal", "normal"],
 			yAxisName: ["", ""],
@@ -181,6 +145,21 @@ export default class Stat extends Vue {
 			]
 		}
 	};
+
+	get indexes(): string[] {
+		return _.flatMap(_.keys(stats), (s: string) => _.keys(vars).map((v: string) => "i_" + v + "_" + s));
+	}
+
+	get labels() {
+		return _.fromPairs(_.flatMap(_.flatMap(_.entries(stats), ([sk, sv]) => {
+			return _.entries(vars).map(([vk, vv]) => {
+				return [vk + "_" + sk, (sv.ratio ? vv.ratio : vv.normal) + " " + sv.long];
+			});
+		}), ([k, v]) => [
+			[k, _.capitalize(v.trim())],
+			["i_" + k, "Crescita " + v.trim()]
+		]));
+	}
 
 	init() {
 		this.loading = true;

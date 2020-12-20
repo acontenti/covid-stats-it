@@ -1,14 +1,16 @@
 import {RouteConfig} from "vue-router";
+import Chart from "pages/Chart.vue";
+import MainLayout from "layouts/MainLayout.vue";
 
 const routes: RouteConfig[] = [
 	{
 		path: "/",
-		component: () => import("layouts/MainLayout.vue"),
+		component: MainLayout,
 		children: [
 			{
 				name: "stat",
 				path: ":place/:stat/:var",
-				component: () => import("pages/Stat.vue")
+				component: Chart
 			},
 			{
 				path: "",
