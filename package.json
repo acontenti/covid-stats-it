@@ -17,7 +17,6 @@
 		"@quasar/extras": "^1.0.0",
 		"axios": "^0.18.1",
 		"core-js": "^3.6.5",
-		"d3": "^6.2.0",
 		"echarts": "^4.9.0",
 		"lodash": "^4.17.20",
 		"quasar": "^1.0.0",
@@ -27,7 +26,6 @@
 	},
 	"devDependencies": {
 		"@quasar/app": "^2.0.0",
-		"@types/d3": "^6.2.0",
 		"@types/lodash": "^4.14.165",
 		"@types/node": "^10.17.15",
 		"devtron": "^1.4.0",

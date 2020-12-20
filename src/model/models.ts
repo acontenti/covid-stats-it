@@ -25,7 +25,7 @@ export interface RawDatum {
 	note?: string
 }
 
-export const stats: string[] = ["casi", "positivi", "guariti", "deceduti", "tamponi", "casi_tamponi"];
+export const stats: string[] = ["casi", "positivi", "guariti", "deceduti", "tamponi", "testati", "casi_tamponi", "casi_testati"];
 export const vars: string[] = ["nuovi", "totale"];
 
 interface TotalValues {
@@ -34,7 +34,9 @@ interface TotalValues {
 	totale_guariti: number
 	totale_deceduti: number
 	totale_tamponi: number
+	totale_testati: number
 	totale_casi_tamponi: number
+	totale_casi_testati: number
 }
 
 interface DailyValues {
@@ -43,7 +45,9 @@ interface DailyValues {
 	nuovi_guariti: number
 	nuovi_deceduti: number
 	nuovi_tamponi: number
+	nuovi_testati: number
 	nuovi_casi_tamponi: number
+	nuovi_casi_testati: number
 }
 
 interface TotalIndexes {
@@ -52,7 +56,9 @@ interface TotalIndexes {
 	i_totale_guariti: number
 	i_totale_deceduti: number
 	i_totale_tamponi: number
+	i_totale_testati: number
 	i_totale_casi_tamponi: number
+	i_totale_casi_testati: number
 }
 
 interface DailyIndexes {
@@ -60,7 +66,9 @@ interface DailyIndexes {
 	i_nuovi_guariti: number
 	i_nuovi_deceduti: number
 	i_nuovi_tamponi: number
+	i_nuovi_testati: number
 	i_nuovi_casi_tamponi: number
+	i_nuovi_casi_testati: number
 }
 
 export interface Values extends DailyValues, TotalValues {

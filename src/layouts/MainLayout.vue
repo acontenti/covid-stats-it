@@ -1,6 +1,14 @@
 <template>
 	<q-layout view="hHh LpR fFf">
 		<q-header :height-hint="100" elevated>
+			<q-bar v-if="$q.electron" class="q-electron-drag">
+				<q-icon name="bar_chart"/>
+				<div>Statistiche COVID-19</div>
+				<q-space/>
+				<q-btn dense flat icon="minimize" @click="minimize"/>
+				<q-btn dense flat icon="crop_square" @click="maximize"/>
+				<q-btn dense flat icon="close" @click="close"/>
+			</q-bar>
 			<q-toolbar>
 				<q-btn aria-label="Menu" dense flat icon="menu" round @click="leftDrawerOpen = !leftDrawerOpen"/>
 				<q-toolbar-title>
@@ -25,8 +33,19 @@
 									<q-item-label>Previsione</q-item-label>
 								</q-item-section>
 								<q-item-section>
-									<q-slider :label-value="lookahead + ' giorni'" :max="60" :min="1" :step="1"
-											  :value="lookahead" label snap @input="updateLookahead"/>
+									<q-slider v-model="lookahead" :label-value="lookahead + ' giorni'" :max="60"
+											  :min="1" :step="1" label snap/>
+								</q-item-section>
+							</q-item>
+							<q-item v-ripple tag="label">
+								<q-item-section avatar>
+									<q-icon name="visibility_off"/>
+								</q-item-section>
+								<q-item-section>
+									<q-item-label>Nascondi primo lockdown</q-item-label>
+								</q-item-section>
+								<q-item-section avatar>
+									<q-toggle v-model="hideFirstLockdown" dense/>
 								</q-item-section>
 							</q-item>
 							<q-item v-ripple tag="label">
@@ -66,8 +85,11 @@
 				<q-route-tab v-if="isAvailable('guariti')" :to="{params:{stat:'guariti'}}" exact label="guariti"/>
 				<q-route-tab v-if="isAvailable('deceduti')" :to="{params:{stat:'deceduti'}}" exact label="deceduti"/>
 				<q-route-tab v-if="isAvailable('tamponi')" :to="{params:{stat:'tamponi'}}" exact label="tamponi"/>
+				<q-route-tab v-if="isAvailable('testati')" :to="{params:{stat:'testati'}}" exact label="testati"/>
 				<q-route-tab v-if="isAvailable('casi_tamponi')" :to="{params:{stat:'casi_tamponi'}}" exact
 							 label="casi/tamponi"/>
+				<q-route-tab v-if="isAvailable('casi_testati')" :to="{params:{stat:'casi_testati'}}" exact
+							 label="casi/testati"/>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>
@@ -124,11 +146,18 @@ export default class MainLayout extends Vue {
 	lastUpdate: Date | null = null;
 	lastData: Date | null = null;
 	dark: boolean = this.$q.dark.isActive;
+	hideFirstLockdown = false;
 	var_: string = this.$route.params.var;
 
 	@Watch("dark")
 	onDarkModeCHange(value: boolean) {
+		this.$q.localStorage.set("dark", value);
 		this.$q.dark.set(value);
+	}
+
+	@Watch("hideFirstLockdown")
+	onHideFirstLockdownChange(value: boolean) {
+		this.$root.$emit("hideFirstLockdownChange", value);
 	}
 
 	setVar(value: string) {
@@ -141,9 +170,8 @@ export default class MainLayout extends Vue {
 		this.var_ = var_;
 	}
 
-	async updateLookahead(value: number) {
-		this.lookahead = value;
-		await this.$nextTick();
+	@Watch("lookahead")
+	async onLookaheadChange(value: number) {
 		this.$root.$emit("lookaheadChange", value);
 	}
 
@@ -184,9 +212,36 @@ export default class MainLayout extends Vue {
 		this.lastData = lastData;
 	}
 
+	minimize() {
+		if (process.env.MODE === "electron") {
+			this.$q.electron.remote.BrowserWindow.getFocusedWindow().minimize();
+		}
+	}
+
+	maximize() {
+		if (process.env.MODE === "electron") {
+			const win = this.$q.electron.remote.BrowserWindow.getFocusedWindow();
+			if (win.isMaximized()) {
+				win.unmaximize();
+			} else {
+				win.maximize();
+			}
+		}
+	}
+
+	close() {
+		if (process.env.MODE === "electron") {
+			this.$q.electron.remote.BrowserWindow.getFocusedWindow().close();
+		}
+	}
+
 	mounted() {
+		if (this.$q.localStorage.has("dark")) {
+			this.dark = this.$q.localStorage.getItem("dark") ?? this.dark;
+		}
 		this.$root.$on("updated", this.onUpdated);
-		this.updateLookahead(this.lookahead);
+		this.onLookaheadChange(this.lookahead);
+		this.onHideFirstLockdownChange(this.hideFirstLockdown);
 	}
 }
 </script>
