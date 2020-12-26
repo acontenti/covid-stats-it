@@ -13,10 +13,6 @@ const routes: RouteConfig[] = [
 				component: Chart
 			},
 			{
-				path: "",
-				redirect: {name: "stat", params: {place: "italia", stat: "casi", var: "nuovi"}}
-			},
-			{
 				path: "*",
 				redirect: {name: "stat", params: {place: "italia", stat: "casi", var: "nuovi"}}
 			}

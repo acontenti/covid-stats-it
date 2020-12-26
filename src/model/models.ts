@@ -25,65 +25,48 @@ export interface RawDatum {
 	note?: string
 }
 
-interface Stat {
-	short: string
-	long: string
-	ratio?: boolean
-	index?: boolean
+class StatInfo {
+	readonly short: string;
+	readonly long: string;
+	readonly index: boolean;
+	readonly ratio: boolean;
+
+	constructor(short: string, long: string, ratio: boolean = false, index: boolean = false) {
+		this.short = short;
+		this.long = long;
+		this.index = index;
+		this.ratio = ratio;
+	}
+
+	isVarAvailable(var_: string) {
+		switch (var_) {
+			case "totale":
+				return true;
+			case "nuovi":
+				return !this.index;
+			default:
+				return false;
+		}
+	}
+
+	get defaultVar() {
+		return  "totale";
+	}
 }
 
-export const stats = <{ [key: string]: Stat }>{
-	rt: {
-		short: "rt",
-		long: "indice rt",
-		index: true
-	},
-	casi: {
-		short: "casi",
-		long: "casi"
-	},
-	positivi: {
-		short: "positivi",
-		long: "attualmente positivi"
-	},
-	deceduti: {
-		short: "deceduti",
-		long: "deceduti"
-	},
-	guariti: {
-		short: "guariti",
-		long: "guariti"
-	},
-	ricoverati: {
-		short: "ricoverati",
-		long: "ricoverati con sintomi"
-	},
-	intensiva: {
-		short: "t. intensiva",
-		long: "ricoverati in terapia intensiva"
-	},
-	isolamento: {
-		short: "isolamento",
-		long: "in isolamento domiciliare"
-	},
-	tamponi: {
-		short: "tamponi",
-		long: "tamponi"
-	},
-	testati: {
-		short: "testati",
-		long: "soggetti testati"
-	},
-	casi_tamponi: {
-		short: "casi/tamponi",
-		long: "rapporto casi/tamponi",
-		ratio: true
-	},
-	casi_testati: {
-		short: "casi/testati",
-		long: "rapporto casi/persone testate",
-		ratio: true
-	}
+export const stats = <{ [key: string]: StatInfo }>{
+	rt: new StatInfo("rt", "indice R(t) [metodo Kohlberg-Neyman]", false, true),
+	casi: new StatInfo("casi", "casi"),
+	positivi: new StatInfo("positivi", "attualmente positivi"),
+	deceduti: new StatInfo("deceduti", "deceduti"),
+	guariti: new StatInfo("guariti", "guariti"),
+	ricoverati: new StatInfo("ricoverati", "ricoverati con sintomi"),
+	intensiva: new StatInfo("t. intensiva", "ricoverati in terapia intensiva"),
+	isolamento: new StatInfo("isolamento", "in isolamento domiciliare"),
+	tamponi: new StatInfo("tamponi", "tamponi"),
+	testati: new StatInfo("testati", "soggetti testati"),
+	casi_tamponi: new StatInfo("casi/tamponi", "rapporto casi/tamponi", true),
+	casi_testati: new StatInfo("casi/testati", "rapporto casi/persone testate", true)
 };
 
 interface Var {

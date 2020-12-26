@@ -152,7 +152,7 @@ export default class Chart extends Vue {
 				return [vk + "_" + sk, (sv.ratio ? vv.ratio : vv.normal) + " " + sv.long];
 			});
 		}), ([k, v]) => [
-			[k, _.capitalize(v.trim())],
+			[k, _.upperFirst(v.trim())],
 			["i_" + k, "Crescita " + v.trim()]
 		]));
 	}

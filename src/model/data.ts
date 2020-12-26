@@ -102,7 +102,10 @@ export class Data {
 			totale_testati = Math.round(Math.max(datum.casi_testati ?? 0, 0));
 			totale_casi_tamponi = Math.min(totale_casi / totale_tamponi * 100, 100);
 			totale_casi_testati = Math.min(totale_casi / totale_testati * 100, 100);
-			nuovi_casi = Math.round(Math.max(datum.nuovi_positivi ?? 0, 0));
+			if ("nuovi_positivi" in datum)
+				nuovi_casi = Math.round(Math.max(datum.nuovi_positivi ?? 0, 0));
+			else
+				nuovi_casi = Math.round(Math.max((datum.totale_casi ?? 0) - (last.totale_casi ?? 0), 0));
 			nuovi_positivi = Math.round(datum.variazione_totale_positivi ?? 0);
 			nuovi_deceduti = Math.round(Math.max((datum.deceduti ?? 0) - (last.deceduti ?? 0), 0));
 			nuovi_guariti = Math.round(Math.max((datum.dimessi_guariti ?? 0) - (last.dimessi_guariti ?? 0), 0));
@@ -228,13 +231,13 @@ export class Data {
 		return _.mean(avg) ?? 0;
 	}
 
-	private static calcRt(input: Datum[], index: number, property: Value = "nuovi_casi", D = 11, N = 7): number {
+	private static calcRt(input: Datum[], index: number, D = 11, N = 7): number {
 		const avgN = [];
 		const avgD = [];
 		for (let i = 1; i <= N; i++) {
 			const d1 = input[index - i] ?? {}, d2 = input[index - (i + D)] ?? {};
-			const value1 = property in d1 ? d1[property] : 0;
-			const value2 = property in d2 ? d2[property] : 0;
+			const value1 = "nuovi_casi" in d1 ? d1["nuovi_casi"] : 0;
+			const value2 = "nuovi_casi" in d2 ? d2["nuovi_casi"] : 0;
 			avgN.push(value1);
 			avgD.push(value2);
 		}

@@ -1,21 +1,40 @@
-import {RawDatum} from "src/model/models";
+import {RawDatum, stats} from "src/model/models";
 
 class PlaceTypeInfo {
-	constructor(readonly url: string, readonly filter: (datum: RawDatum, place: Place) => boolean) {}
+	readonly url: string;
+	readonly filter: (datum: RawDatum, place: Place) => boolean;
+	readonly availableStats: string[];
+
+	constructor(url: string, filter: (datum: RawDatum, place: Place) => boolean, availableStats: string[]) {
+		this.url = url;
+		this.filter = filter;
+		this.availableStats = availableStats;
+	}
+
+	isStatAvailable(stat: string) {
+		return this.availableStats.includes(stat);
+	}
+
+	get defaultStat() {
+		return this.availableStats[0];
+	}
 }
 
 export const placeTypes = {
 	state: new PlaceTypeInfo(
 		"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-andamento-nazionale.json",
-		(_datum: RawDatum, _place: Place) => true
+		() => true,
+		Object.keys(stats)
 	),
 	region: new PlaceTypeInfo(
 		"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-regioni.json",
-		(datum: RawDatum, place: Place) => datum.codice_regione == place.code
+		(datum: RawDatum, place: Place) => datum.codice_regione == place.code,
+		Object.keys(stats)
 	),
 	province: new PlaceTypeInfo(
 		"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-province.json",
-		(datum: RawDatum, place: Place) => datum.codice_provincia == place.code
+		(datum: RawDatum, place: Place) => datum.codice_provincia == place.code,
+		["casi", "rt"]
 	)
 };
 export type PlaceType = keyof typeof placeTypes;

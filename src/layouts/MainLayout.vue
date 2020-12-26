@@ -74,13 +74,25 @@
 									<q-icon name="open_in_new"/>
 								</q-item-section>
 							</q-item>
+							<q-item v-ripple href="https://www.hbs.edu/faculty/Pages/item.aspx?num=58078" tag="a"
+									target="_blank">
+								<q-item-section avatar>
+									<q-icon name="read_more"/>
+								</q-item-section>
+								<q-item-section>
+									<q-item-label>Metodo Kohlberg-Neyman</q-item-label>
+								</q-item-section>
+								<q-item-section side>
+									<q-icon name="open_in_new"/>
+								</q-item-section>
+							</q-item>
 						</q-list>
 					</q-menu>
 				</q-btn>
 			</q-toolbar>
 			<q-tabs align="center" dense mobile-arrows outside-arrows>
-				<q-route-tab v-for="(stat, key) in stats" v-if="isStatAvailable(key)" :key="key"
-							 :label="stat.short" :to="{params:{stat:key,...(stat.index?{var:'totale'}:{})}}" exact/>
+				<q-route-tab v-for="(stat, key) in stats" v-if="isStatAvailable(key) && isStatVisible(key)" :key="key"
+							 :label="stat.short" :to="{params:{stat:key}}" exact/>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>
@@ -112,7 +124,7 @@
 <script lang="ts">
 import MenuLink from "components/MenuLink.vue";
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Place, PlaceName, places} from "src/model/place";
+import {Place, PlaceName, places, placeTypes} from "src/model/place";
 import {Data} from "src/model/data";
 import {stats, vars} from "src/model/models";
 
@@ -120,14 +132,10 @@ import {stats, vars} from "src/model/models";
 	components: {MenuLink},
 	filters: {
 		dateTimeFormat(date?: Date) {
-			if (date)
-				return date.toLocaleString();
-			else return "";
+			return date ? date.toLocaleString() : "";
 		},
 		dateFormat(date?: Date) {
-			if (date)
-				return date.toLocaleDateString();
-			else return "";
+			return date ? date.toLocaleDateString() : "";
 		}
 	}
 })
@@ -174,26 +182,13 @@ export default class MainLayout extends Vue {
 		let placeName = this.$route.params.place;
 		if (!placeName) return false;
 		let currentPlace = places[<PlaceName>placeName];
-		switch (currentPlace.type) {
-			case "state":
-			case "region":
-				return true;
-			case "province":
-				return stat == "casi";
-		}
+		return placeTypes[currentPlace.type].isStatAvailable(stat);
 	}
 
 	isVarToggleable() {
-		let placeName = this.$route.params.place;
-		if (!placeName) return false;
-		let currentPlace = places[<PlaceName>placeName];
-		switch (currentPlace.type) {
-			case "state":
-			case "region":
-				return !stats[this.$route.params.stat].index;
-			case "province":
-				return false;
-		}
+		const stat = this.$route.params.stat;
+		if (!stat) return false;
+		return !stats[stat].index;
 	}
 
 	refresh() {
