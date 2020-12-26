@@ -92,7 +92,42 @@
 			</q-toolbar>
 			<q-tabs align="center" dense mobile-arrows outside-arrows>
 				<q-route-tab v-for="(stat, key) in stats" v-if="isStatAvailable(key) && isStatVisible(key)" :key="key"
-							 :label="stat.short" :to="{params:{stat:key}}" exact/>
+							 :label="stat.short" :to="{params:{stat:key}}" exact>
+					<q-menu auto-close context-menu>
+						<q-list dense>
+							<q-item clickable @click="hideStat(key)">
+								<q-item-section>Nascondi</q-item-section>
+							</q-item>
+						</q-list>
+					</q-menu>
+				</q-route-tab>
+				<q-btn-dropdown v-if="hiddenStatsSize > 0" auto-close flat icon="more_horiz" stretch>
+					<template v-slot:label>
+						<q-badge :label="hiddenStatsSize" color="white" floating style="top: 0" text-color="primary"/>
+						<q-menu auto-close context-menu>
+							<q-list dense>
+								<q-item clickable @click="showAllStats">
+									<q-item-section>Mostra tutti</q-item-section>
+								</q-item>
+							</q-list>
+						</q-menu>
+					</template>
+					<template v-slot:default>
+						<q-list dense>
+							<q-item v-for="(stat, key) in stats" v-if="isStatAvailable(key) && !isStatVisible(key)"
+									:key="key" :to="{params:{stat:key}}" clickable exact>
+								<q-item-section class="text-uppercase">{{ stat.short }}</q-item-section>
+								<q-menu auto-close context-menu>
+									<q-list dense>
+										<q-item clickable @click="showStat(key)">
+											<q-item-section>Mostra</q-item-section>
+										</q-item>
+									</q-list>
+								</q-menu>
+							</q-item>
+						</q-list>
+					</template>
+				</q-btn-dropdown>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>
@@ -151,11 +186,21 @@ export default class MainLayout extends Vue {
 	dark: boolean = this.$q.dark.isActive;
 	hideFirstLockdown = false;
 	var_: string = this.$route.params.var;
+	hiddenStats: Set<string> = new Set<string>();
+
+	get hiddenStatsSize() {
+		return [...this.hiddenStats].filter(value => this.isStatAvailable(value)).length;
+	}
 
 	@Watch("dark")
 	onDarkModeCHange(value: boolean) {
 		this.$q.localStorage.set("dark", value);
 		this.$q.dark.set(value);
+	}
+
+	@Watch("hiddenStats")
+	onhiddenStatsCHange() {
+		this.$q.localStorage.set("hiddenStats", [...this.hiddenStats]);
 	}
 
 	@Watch("hideFirstLockdown")
@@ -189,6 +234,24 @@ export default class MainLayout extends Vue {
 		const stat = this.$route.params.stat;
 		if (!stat) return false;
 		return !stats[stat].index;
+	}
+
+	isStatVisible(stat: string) {
+		return !this.hiddenStats.has(stat);
+	}
+
+	hideStat(stat: string) {
+		this.hiddenStats.add(stat);
+		this.hiddenStats = new Set(this.hiddenStats);
+	}
+
+	showStat(stat: string) {
+		this.hiddenStats.delete(stat);
+		this.hiddenStats = new Set(this.hiddenStats);
+	}
+
+	showAllStats() {
+		this.hiddenStats = new Set();
 	}
 
 	refresh() {
@@ -230,6 +293,9 @@ export default class MainLayout extends Vue {
 	mounted() {
 		if (this.$q.localStorage.has("dark")) {
 			this.dark = this.$q.localStorage.getItem("dark") ?? this.dark;
+		}
+		if (this.$q.localStorage.has("hiddenStats")) {
+			this.hiddenStats = new Set<string>(this.$q.localStorage.getItem<string[]>("hiddenStats") ?? []);
 		}
 		this.$root.$on("updated", this.onUpdated);
 		this.onLookaheadChange(this.lookahead);
