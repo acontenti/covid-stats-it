@@ -1,32 +1,31 @@
 import {RawDatum} from "src/model/models";
 
-interface PlaceTypeInfo {
-	url: string
-	filter: (datum: RawDatum, place: Place) => boolean
+class PlaceTypeInfo {
+	constructor(readonly url: string, readonly filter: (datum: RawDatum, place: Place) => boolean) {}
 }
 
 export const placeTypes = {
-	state: <PlaceTypeInfo>{
-		url: "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-andamento-nazionale.json",
-		filter: (_datum: RawDatum, _place: Place) => true
-	},
-	region: <PlaceTypeInfo>{
-		url: "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-regioni.json",
-		filter: (datum: RawDatum, place: Place) => datum.codice_regione == place.code
-	},
-	province: <PlaceTypeInfo>{
-		url: "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-province.json",
-		filter: (datum: RawDatum, place: Place) => datum.codice_provincia == place.code
-	}
+	state: new PlaceTypeInfo(
+		"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-andamento-nazionale.json",
+		(_datum: RawDatum, _place: Place) => true
+	),
+	region: new PlaceTypeInfo(
+		"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-regioni.json",
+		(datum: RawDatum, place: Place) => datum.codice_regione == place.code
+	),
+	province: new PlaceTypeInfo(
+		"https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-province.json",
+		(datum: RawDatum, place: Place) => datum.codice_provincia == place.code
+	)
 };
 export type PlaceType = keyof typeof placeTypes;
 
 export class Place {
 	constructor(
-		public readonly title: string,
-		public readonly link: PlaceName,
-		public readonly code: number,
-		public readonly type: PlaceType
+		readonly title: string,
+		readonly link: PlaceName,
+		readonly code: number,
+		readonly type: PlaceType
 	) {}
 
 	isRegion() {
@@ -186,7 +185,7 @@ interface Places extends States, Regions, Provinces {
 
 export type PlaceName = keyof typeof places;
 
-export const places = <Places>{
+export const places: Places = {
 	//states
 	italia: new Place("Italia", "italia", 0, "state"),
 	//regions

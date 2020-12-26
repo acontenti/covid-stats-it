@@ -14,7 +14,7 @@
 				<q-toolbar-title>
 					Statistiche COVID-19
 				</q-toolbar-title>
-				<q-btn-toggle :disable="!isVarToggleable()"
+				<q-btn-toggle v-if="isVarToggleable()"
 							  :options="Object.entries(vars).map(([k,v])=>({label:v.normal,value:k}))"
 							  :value="var_" toggle-color="white" toggle-text-color="black" unelevated @input="setVar"/>
 				<q-btn flat icon="refresh" round @click="refresh">
@@ -79,8 +79,8 @@
 				</q-btn>
 			</q-toolbar>
 			<q-tabs align="center" dense mobile-arrows outside-arrows>
-				<q-route-tab v-for="(label, stat) in stats" v-if="isStatAvailable(stat)" :key="stat"
-							 :label="label.short" :to="{params:{stat:stat}}" exact/>
+				<q-route-tab v-for="(stat, key) in stats" v-if="isStatAvailable(key)" :key="key"
+							 :label="stat.short" :to="{params:{stat:key,...(stat.index?{var:'totale'}:{})}}" exact/>
 			</q-tabs>
 		</q-header>
 		<q-drawer v-model="leftDrawerOpen" :width="200" elevated show-if-above>
@@ -190,7 +190,7 @@ export default class MainLayout extends Vue {
 		switch (currentPlace.type) {
 			case "state":
 			case "region":
-				return true;
+				return !stats[this.$route.params.stat].index;
 			case "province":
 				return false;
 		}

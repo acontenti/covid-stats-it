@@ -29,9 +29,15 @@ interface Stat {
 	short: string
 	long: string
 	ratio?: boolean
+	index?: boolean
 }
 
 export const stats = <{ [key: string]: Stat }>{
+	rt: {
+		short: "rt",
+		long: "indice rt",
+		index: true
+	},
 	casi: {
 		short: "casi",
 		long: "casi"
@@ -66,7 +72,7 @@ export const stats = <{ [key: string]: Stat }>{
 	},
 	testati: {
 		short: "testati",
-		long: "soggetti testati",
+		long: "soggetti testati"
 	},
 	casi_tamponi: {
 		short: "casi/tamponi",
@@ -97,6 +103,7 @@ export const vars = <{ [key: string]: Var }>{
 };
 
 interface TotalValues {
+	totale_rt: number
 	totale_casi: number
 	totale_positivi: number
 	totale_guariti: number
@@ -155,8 +162,12 @@ interface DailyIndexes {
 export interface Values extends DailyValues, TotalValues {
 }
 
+export type Value = keyof Values
+
 export interface Indexes extends DailyIndexes, TotalIndexes {
 }
+
+export type Index = keyof Indexes
 
 export interface Datum extends Values, Indexes {
 	data: Date

@@ -1,7 +1,7 @@
 import {Place, PlaceName, places, placeTypes} from "src/model/place";
 import axios from "axios";
 import _ from "lodash";
-import {Datum, RawDatum, Values} from "src/model/models";
+import {Datum, RawDatum, Value} from "src/model/models";
 import {date} from "quasar";
 
 export class Data {
@@ -59,6 +59,7 @@ export class Data {
 	}
 
 	private static createDatum(date: Date, index: number, datum: RawDatum, last: RawDatum, result: Datum[]): Datum {
+		const i_rt = this.calcGrowth(result, index, "totale_rt");
 		const i_totale_casi = this.calcGrowth(result, index, "totale_casi");
 		const i_totale_positivi = this.calcGrowth(result, index, "totale_positivi");
 		const i_totale_deceduti = this.calcGrowth(result, index, "totale_deceduti");
@@ -84,10 +85,12 @@ export class Data {
 		let nuovi_casi: number, nuovi_positivi: number, nuovi_deceduti: number, nuovi_guariti: number,
 			nuovi_ricoverati: number, nuovi_intensiva: number, nuovi_isolamento: number,
 			nuovi_tamponi: number, nuovi_testati: number, nuovi_casi_tamponi: number, nuovi_casi_testati: number,
+			rt: number,
 			totale_casi: number, totale_positivi: number, totale_deceduti: number, totale_guariti: number,
 			totale_ricoverati: number, totale_intensiva: number, totale_isolamento: number,
 			totale_tamponi: number, totale_testati: number, totale_casi_tamponi: number, totale_casi_testati: number;
 		if (datum) {
+			rt = Math.max(this.calcRt(result, index), 0);
 			totale_casi = Math.round(Math.max(datum.totale_casi ?? 0, 0));
 			totale_positivi = Math.round(Math.max(datum.totale_positivi ?? 0, 0));
 			totale_deceduti = Math.round(Math.max(datum.deceduti ?? 0, 0));
@@ -115,6 +118,7 @@ export class Data {
 			nuovi_casi_tamponi = Math.min(nuovi_casi / nuovi_tamponi * 100, 100);
 			nuovi_casi_testati = Math.min(nuovi_casi / nuovi_testati * 100, 100);
 		} else {
+			rt = Math.max(this.calcFuture(result, index, "totale_rt", i_rt), 0);
 			totale_casi = Math.round(this.calcFuture(result, index, "totale_casi", i_totale_casi));
 			totale_positivi = Math.round(this.calcFuture(result, index, "totale_positivi", i_totale_positivi));
 			totale_deceduti = Math.round(this.calcFuture(result, index, "totale_deceduti", i_totale_deceduti));
@@ -140,6 +144,7 @@ export class Data {
 		}
 		return {
 			data: date,
+			totale_rt: isFinite(rt) ? rt : 0,
 			totale_casi: isFinite(totale_casi) ? totale_casi : 0,
 			totale_positivi: isFinite(totale_positivi) ? totale_positivi : 0,
 			totale_deceduti: isFinite(totale_deceduti) ? totale_deceduti : 0,
@@ -188,7 +193,7 @@ export class Data {
 		};
 	}
 
-	private static calcFuture(input: Datum[], index: number, property: keyof Values, growth: number, sum = false): number {
+	private static calcFuture(input: Datum[], index: number, property: Value, growth: number, sum = false): number {
 		const last1 = input[index - 7] ?? {};
 		const last2 = input[index - 14] ?? {};
 		const avg = [];
@@ -211,16 +216,30 @@ export class Data {
 		return _.clamp(_.mean(avg) ?? 0, -Data.MAX, Data.MAX);
 	}
 
-	private static calcGrowth(input: Datum[], index: number, property: keyof Values, subtract = false): number {
+	private static calcGrowth(input: Datum[], index: number, property: Value, subtract = false, D = 7, N = 7): number {
 		const avg = [];
-		for (let i = 1; i <= 7; i++) {
-			const d1 = input[index - i] ?? {}, d2 = input[index - (i + 7)] ?? {};
+		for (let i = 1; i <= N; i++) {
+			const d1 = input[index - i] ?? {}, d2 = input[index - (i + D)] ?? {};
 			const value1 = property in d1 ? d1[property] : 0;
 			const value2 = property in d2 ? d2[property] : 0;
 			const result = subtract ? value1 - value2 : value1 / value2;
 			avg.push(Number.isFinite(result) ? result : 0);
 		}
 		return _.mean(avg) ?? 0;
+	}
+
+	private static calcRt(input: Datum[], index: number, property: Value = "nuovi_casi", D = 11, N = 7): number {
+		const avgN = [];
+		const avgD = [];
+		for (let i = 1; i <= N; i++) {
+			const d1 = input[index - i] ?? {}, d2 = input[index - (i + D)] ?? {};
+			const value1 = property in d1 ? d1[property] : 0;
+			const value2 = property in d2 ? d2[property] : 0;
+			avgN.push(value1);
+			avgD.push(value2);
+		}
+		const rt = _.mean(avgN) / _.mean(avgD);
+		return Number.isFinite(rt) ? rt : 0;
 	}
 
 	public static reset() {

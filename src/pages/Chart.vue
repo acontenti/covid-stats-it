@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import {Component, Vue, Watch} from "vue-property-decorator";
-import {Indexes, stats, Values, vars} from "src/model/models";
+import {Index, stats, Value, vars} from "src/model/models";
 import "echarts/lib/component/dataZoom";
 import "echarts/lib/component/markLine";
 import "echarts/lib/component/markArea";
@@ -36,8 +36,8 @@ const LOCALE_IT: DateLocale = {
 @Component({})
 export default class Chart extends Vue {
 	place: Place = places.italia;
-	stat: keyof Values = "nuovi_casi";
-	istat: keyof Indexes = "i_nuovi_casi";
+	stat: Value = "nuovi_casi";
+	istat: Index = "i_nuovi_casi";
 	futureStart = new Date();
 	loading = true;
 	textColor = this.$q.dark.isActive ? "#fff" : "#000";
@@ -117,14 +117,10 @@ export default class Chart extends Vue {
 				},
 				textStyle: {
 					color: this.textColor
-				},
-				start: 0,
-				end: 100
+				}
 			},
 			{
-				type: "inside",
-				start: 0,
-				end: 100
+				type: "inside"
 			}
 		],
 		markArea: {
@@ -152,7 +148,7 @@ export default class Chart extends Vue {
 
 	get labels() {
 		return _.fromPairs(_.flatMap(_.flatMap(_.entries(stats), ([sk, sv]) => {
-			return _.entries(vars).map(([vk, vv]) => {
+			return sv.index ? [["totale_" + sk, sv.long]] : _.entries(vars).map(([vk, vv]) => {
 				return [vk + "_" + sk, (sv.ratio ? vv.ratio : vv.normal) + " " + sv.long];
 			});
 		}), ([k, v]) => [
@@ -164,8 +160,8 @@ export default class Chart extends Vue {
 	init() {
 		this.loading = true;
 		this.place = places[<PlaceName>this.$route.params.place];
-		this.stat = <keyof Values>(this.$route.params.var + "_" + this.$route.params.stat);
-		this.istat = <keyof Indexes>("i_" + this.stat);
+		this.stat = <Value>(this.$route.params.var + "_" + this.$route.params.stat);
+		this.istat = <Index>("i_" + this.stat);
 		Data.getInstance()
 			.then((instance: Data) => ({instance, value: instance.get(this.place.link)}))
 			.then(({instance, value}) => ({
