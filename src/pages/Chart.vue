@@ -40,7 +40,7 @@ export default class Chart extends Vue {
 	istat: Index = "i_nuovi_casi";
 	futureStart = new Date();
 	loading = true;
-	textColor = this.$q.dark.isActive ? "#fff" : "#000";
+	textColor = this.$settings.darkMode ? "#fff" : "#000";
 	chart = {
 		width: 100,
 		height: 200,
@@ -81,6 +81,21 @@ export default class Chart extends Vue {
 			"series.0.type": "line",
 			"series.0.symbol": "circle",
 			"series.0.symbolSize": 5,
+			"series.0.markLine": {
+				symbol: "none",
+				silent: true,
+				label: {
+					show: false
+				},
+				lineStyle: {
+					type: "solid",
+					color: this.textColor,
+					width: 1
+				},
+				data: [{
+					yAxis: 0
+				}]
+			},
 			"series.1.type": "line",
 			"series.1.symbol": "none",
 			"series.1.lineStyle.width": 1,
@@ -99,8 +114,8 @@ export default class Chart extends Vue {
 				}]
 			},
 			"xAxis.0.scale": true,
-			"xAxis.0.max": "dataMax",
-			"xAxis.0.min": this.formatDate(new Date("2020-02-24")),
+			"xAxis.0.max": this.lookahead,
+			"xAxis.0.min": this.startingDate,
 			"xAxis.0.axisLabel.formatter"(value: string) {
 				return value ? value.substring(value.indexOf(", ") + 2, value.lastIndexOf("/")) : "";
 			},
@@ -157,6 +172,15 @@ export default class Chart extends Vue {
 		]));
 	}
 
+	get lookahead() {
+		let fdate = date.addToDate(this.futureStart, {days: this.$settings.lookahead});
+		return this.formatDate(fdate);
+	}
+
+	get startingDate() {
+		return this.$settings.hideFirstLockdown ? this.formatDate(new Date("2020-05-05")) : "dataMin";
+	}
+
 	init() {
 		this.loading = true;
 		this.place = places[<PlaceName>this.$route.params.place];
@@ -194,13 +218,14 @@ export default class Chart extends Vue {
 		this.chart.width = size.width;
 	}
 
-	onLookaheadChange(value: number) {
-		let fdate = date.addToDate(this.futureStart, {days: value});
-		this.chart.extend["xAxis.0.max"] = this.formatDate(fdate);
+	@Watch("$settings.lookahead")
+	onLookaheadChange() {
+		this.chart.extend["xAxis.0.max"] = this.lookahead;
 	}
 
-	onHideFirstLockdownChange(value: boolean) {
-		this.chart.extend["xAxis.0.min"] = value ? this.formatDate(new Date("2020-05-05")) : "dataMin";
+	@Watch("$settings.hideFirstLockdown")
+	onHideFirstLockdownChange() {
+		this.chart.extend["xAxis.0.min"] = this.startingDate;
 	}
 
 	@Watch("$route")
@@ -208,7 +233,7 @@ export default class Chart extends Vue {
 		this.init();
 	}
 
-	@Watch("$q.dark.isActive")
+	@Watch("$settings.darkMode")
 	onDarkModeCHange(value: boolean) {
 		this.textColor = value ? "#fff" : "#000";
 		this.chart.extend.textStyle.color = this.textColor;
@@ -217,6 +242,7 @@ export default class Chart extends Vue {
 		this.chart.dataZoom[0].textStyle!.color = this.textColor;
 		this.chart.markArea.itemStyle.color = value ? "#cccccc22" : "#22222222";
 		this.chart.markArea.label.color = this.textColor;
+		this.chart.extend["series.0.markLine"].lineStyle.color = this.textColor;
 		this.chart.extend["series.1.markLine"].lineStyle.color = this.textColor;
 	}
 
@@ -226,8 +252,6 @@ export default class Chart extends Vue {
 
 	mounted() {
 		this.init();
-		this.$root.$on("lookaheadChange", this.onLookaheadChange);
-		this.$root.$on("hideFirstLockdownChange", this.onHideFirstLockdownChange);
 		this.$root.$on("refresh", this.init);
 	}
 };

@@ -32,8 +32,9 @@
 								<q-item-label>Previsione</q-item-label>
 							</q-item-section>
 							<q-item-section>
-								<q-slider v-model="lookahead" :label-value="lookahead + ' giorni'"
-										  :max="maxLookahead" :min="1" :step="1" label snap/>
+								<q-slider :label-value="$settings.lookahead + ' giorni'" :max="$settings.maxLookahead"
+										  :min="1" :step="1" :value="$settings.lookahead" label snap
+										  @input="value => $settings.lookahead = value"/>
 							</q-item-section>
 						</q-item>
 						<q-item v-ripple tag="label">
@@ -44,7 +45,7 @@
 								<q-item-label>Nascondi primo lockdown</q-item-label>
 							</q-item-section>
 							<q-item-section avatar>
-								<q-toggle v-model="hideFirstLockdown" dense/>
+								<q-toggle v-model="$settings.hideFirstLockdown" dense/>
 							</q-item-section>
 						</q-item>
 						<q-item v-ripple tag="label">
@@ -55,7 +56,8 @@
 								<q-item-label>Modalità scura</q-item-label>
 							</q-item-section>
 							<q-item-section avatar>
-								<q-toggle :value="$q.dark.isActive" dense @input="$q.dark.toggle()"/>
+								<q-toggle :value="$settings.darkMode" dense
+										  @input="$settings.darkMode = !$settings.darkMode"/>
 							</q-item-section>
 						</q-item>
 						<q-item v-ripple href="https://github.com/acontenti/covid-stats-it" tag="a" target="_blank">
@@ -134,46 +136,22 @@
 <script lang="ts">
 import {PlaceName, places, placeTypes} from "src/model/place";
 import {Data} from "src/model/data";
-import {Component, PropSync, Vue, Watch} from "vue-property-decorator";
+import {Component, PropSync, Vue} from "vue-property-decorator";
 import {stats, vars} from "src/model/models";
 
 @Component({})
 export default class Controls extends Vue {
 	readonly vars = vars;
 	readonly stats = stats;
-	readonly maxLookahead = Data.lookahead;
 	@PropSync("leftDrawerOpen")
 	_leftDrawerOpen!: boolean;
-	lookahead = 30;
-	hideFirstLockdown = false;
-	hiddenStats = new Set<string>();
 
 	get hiddenStatsSize() {
-		return [...this.hiddenStats].filter(value => this.isStatAvailable(value)).length;
-	}
-
-	@Watch("$q.dark.isActive", {deep:true})
-	onDarkModeCHange(value: boolean) {
-		this.$q.localStorage.set("dark", value);
-	}
-
-	@Watch("hiddenStats")
-	onhiddenStatsCHange() {
-		this.$q.localStorage.set("hiddenStats", [...this.hiddenStats]);
-	}
-
-	@Watch("hideFirstLockdown")
-	onHideFirstLockdownChange(value: boolean) {
-		this.$root.$emit("hideFirstLockdownChange", value);
+		return [...this.$settings.hiddenStats].filter(value => this.isStatAvailable(value)).length;
 	}
 
 	setVar(value: string) {
 		this.$router.push({params: {var: value}});
-	}
-
-	@Watch("lookahead")
-	async onLookaheadChange(value: number) {
-		this.$root.$emit("lookaheadChange", value);
 	}
 
 	isStatAvailable(stat: string) {
@@ -190,21 +168,21 @@ export default class Controls extends Vue {
 	}
 
 	isStatVisible(stat: string) {
-		return !this.hiddenStats.has(stat);
+		return !this.$settings.hiddenStats.has(stat);
 	}
 
 	hideStat(stat: string) {
-		this.hiddenStats.add(stat);
-		this.hiddenStats = new Set(this.hiddenStats);
+		this.$settings.hiddenStats.add(stat);
+		this.$settings.hiddenStats = new Set(this.$settings.hiddenStats);
 	}
 
 	showStat(stat: string) {
-		this.hiddenStats.delete(stat);
-		this.hiddenStats = new Set(this.hiddenStats);
+		this.$settings.hiddenStats.delete(stat);
+		this.$settings.hiddenStats = new Set(this.$settings.hiddenStats);
 	}
 
 	showAllStats() {
-		this.hiddenStats = new Set();
+		this.$settings.hiddenStats = new Set();
 	}
 
 	refresh() {
@@ -235,17 +213,6 @@ export default class Controls extends Vue {
 		if (process.env.MODE === "electron") {
 			this.$q.electron.remote.BrowserWindow.getFocusedWindow()?.close();
 		}
-	}
-
-	mounted() {
-		if (this.$q.localStorage.has("dark")) {
-			this.$q.dark.set(this.$q.localStorage.getItem<boolean>("dark") ?? false);
-		}
-		if (this.$q.localStorage.has("hiddenStats")) {
-			this.hiddenStats = new Set<string>(this.$q.localStorage.getItem<string[]>("hiddenStats") ?? []);
-		}
-		this.onLookaheadChange(this.lookahead);
-		this.onHideFirstLockdownChange(this.hideFirstLockdown);
 	}
 }
 </script>
